@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-		<meta charset="UTF-8">
-		<link rel="icon" href="git_icon.svg" type="image/svg+xml">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="icons/git_icon.svg" type="image/svg+xml">
     <title>git</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
   </head>
@@ -10,55 +11,70 @@
     <div class="menu-bar">
       <div class="tools-left">
         <div class="tool">
-          <img style="width: 35px;" src="icons/git_icon.svg" alt="Git Icon">
+          <img src="icons/git_icon.svg" alt="Git Icon">
         </div>
       </div>
       <div class="tools-center">
-        <div class="tool">
-          <img style="width: 35px;" src="icons/undo_icon.png" alt="undo">
+        <div class="tool" title="Undo">
+          <img src="icons/undo_icon.png" alt="Undo">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/redo_icon.png" alt="redo">
+        <div class="tool" title="Redo">
+          <img src="icons/redo_icon.png" alt="Redo">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/revert_icon.png" alt="revert">
+        <div class="tool" title="Revert">
+          <img src="icons/revert_icon.png" alt="Revert">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/pull_icon.png" alt="pull">
+        <div class="tool" title="Pull">
+          <img src="icons/pull_icon.png" alt="Pull">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/push_icon.png" alt="push">
+        <div class="tool" title="Push">
+          <img src="icons/push_icon.png" alt="Push">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/branch_icon.svg" alt="branch">
+        <div class="tool" title="Branch">
+          <img src="icons/branch_icon.svg" alt="Branch">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/merge_icon.svg" alt="merge">
+        <div class="tool" title="Merge">
+          <img src="icons/merge_icon.svg" alt="Merge">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/stash_icon.svg" alt="stash">
+        <div class="tool" title="Stash">
+          <img src="icons/stash_icon.svg" alt="Stash">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/pop_icon.svg" alt="pop">
+        <div class="tool" title="Pop">
+          <img src="icons/pop_icon.svg" alt="Pop">
         </div>
       </div>
       <div class="tools-right">
-        <div class="tool">
-          <img style="width: 35px;" src="icons/search_icon.svg" alt="search">
+        <div class="tool" title="Search">
+          <img src="icons/search_icon.svg" alt="Search">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/command_palette_icon.svg" alt="command palette">
+        <div class="tool" title="Command Palette">
+          <img src="icons/command_palette_icon.svg" alt="Command Palette">
         </div>
-        <div class="tool">
-          <img style="width: 35px;" src="icons/settings_icon.png" alt="settings">
+        <div class="tool" title="Settings">
+          <img src="icons/settings_icon.png" alt="Settings">
         </div>
       </div>
     </div>
-    <div class="left-panel">
-      example text
-    </div>
+
     <div class="right-panel">
-      example text
+      <div class="panel-header">
+        <h2>Commit Details</h2>
+        <button class="close-panel" aria-label="Close panel">×</button>
+      </div>
+      <div class="commit-details">
+        <!-- Commit details will be populated here -->
+        <div class="placeholder">
+          <p>Select a commit to view details</p>
+        </div>
+      </div>
     </div>
+
+    <main class="content-area">
+      <div class="git-tree-container">
+        <div class="git-tree" id="gitTree">
+        </div>
+      </div>
+    </main>
+    <script src="scripts.js"></script>
   </body>
 </html>
