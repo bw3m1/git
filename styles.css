@@ -61,3 +61,33 @@ html, body {
 	color: #666;
 	pointer-events: none;
 }
+
+.right-panel {
+  position: fixed;
+  top: 50px; /* below the menu bar */
+  right: 0;
+  width: 350px;
+  height: calc(100% - 50px);
+  background-color: #252526;
+  color: #fff;
+  border-left: 1px solid #333;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.left-panel {
+  position: fixed;
+  top: 50px; /* below the menu bar */
+  left: 0;
+  width: 350px;
+  height: calc(100% - 50px);
+  background-color: #252526;
+  color: #fff;
+  border-right: 1px solid #333;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 10;
+}
