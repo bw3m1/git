@@ -25,10 +25,10 @@ html, body {
 	justify-content: center;
 	align-items: center;
 	flex: 1;
+	gap: 10px;
 }
 
 .menu-item {
-	margin-right: 20px;
 	color: #fff;
 	text-decoration: none;
 }
