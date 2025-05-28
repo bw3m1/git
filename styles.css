@@ -16,8 +16,13 @@ html, body {
 	background-color: #333;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	padding: 0 20px;
+	padding: 0 10px; /* Reduced from 20px to 10px */
+}
+
+.tools-left {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 }
 
 .tools-center {
@@ -26,6 +31,17 @@ html, body {
 	align-items: center;
 	flex: 1;
 	gap: 10px;
+}
+
+.tools-right {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 10px;
+}
+
+.tools-right > *:last-child {
+	margin-right: 15px; /* Ensures the last icon isn't flush with the edge */
 }
 
 .menu-item {
