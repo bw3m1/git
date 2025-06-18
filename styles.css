@@ -213,8 +213,9 @@ body {
   gap: 18px;
   background: rgba(40,40,40,0.7);
   border-radius: 6px;
-  min-width: 36px;
+  min-width: 56px;
   min-height: 32px;
+  padding: 0 4px;
   overflow: visible;
 }
 
@@ -229,6 +230,18 @@ body {
 .commit-dot.branch-tip, .commit-graph-cell div > div.branch-tip {
   box-shadow: 0 0 8px 2px #4ec9b088;
   border: 2.5px solid #fff2;
+}
+
+/* SVG commit dot styling */
+.commit-dot-svg {
+  filter: drop-shadow(0 2px 6px #000a);
+  cursor: pointer;
+  transition: stroke-width 0.2s, filter 0.2s;
+}
+
+.commit-dot-svg:hover {
+  stroke-width: 4px;
+  filter: drop-shadow(0 0 10px #fff8);
 }
 
 .connection-line {
