@@ -176,7 +176,6 @@ html, body {
   background: none;
   pointer-events: none;
   z-index: 5;
-  transform: translateY(27px); /* Shift down by half row height */
 }
 
 /* Git Tree Header */
@@ -190,6 +189,7 @@ html, body {
   font-weight: 600;
   background-color: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
+  z-index: 1;
 }
 
 /* Commit Node Styling */

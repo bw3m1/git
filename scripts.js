@@ -44,15 +44,99 @@ const commits = [
     ]
   },
   {
+    hash: 'p3q4r5s',
+    message: 'Hotfix: urgent bugfix',
+    author: 'Dan',
+    date: '2024-06-03T10:00:00',
+    branch: 'hotfix',
+    parents: ['a1b2c3d'],
+    isHead: false,
+    changes: [
+      { file: 'main.js', status: 'modified', lines: '+1 -1' }
+    ]
+  },
+  {
+    hash: 't6u7v8w',
+    message: 'Feature Y (diverged)',
+    author: 'Eve',
+    date: '2024-06-03T11:00:00',
+    branch: 'feature-y',
+    parents: ['a1b2c3d'],
+    isHead: false,
+    changes: [
+      { file: 'featureY.js', status: 'added', lines: '+80' }
+    ]
+  },
+  {
+    hash: 'x9y0z1a',
+    message: 'Continue feature Y',
+    author: 'Eve',
+    date: '2024-06-03T13:00:00',
+    branch: 'feature-y',
+    parents: ['t6u7v8w'],
+    isHead: false,
+    changes: [
+      { file: 'featureY.js', status: 'modified', lines: '+30 -5' }
+    ]
+  },
+  {
+    hash: 'b2c3d4e',
+    message: 'Merge hotfix into main',
+    author: 'Alice',
+    date: '2024-06-03T14:00:00',
+    branch: 'main',
+    parents: ['a1b2c3d', 'p3q4r5s'],
+    isHead: false,
+    changes: [
+      { file: 'main.js', status: 'modified', lines: '+1 -1' }
+    ]
+  },
+  {
+    hash: 'c5d6e7f',
+    message: 'Rebase feature on main',
+    author: 'Carol',
+    date: '2024-06-03T15:00:00',
+    branch: 'feature',
+    parents: ['b2c3d4e'],
+    isHead: false,
+    changes: [
+      { file: 'feature.js', status: 'modified', lines: '+10' }
+    ]
+  },
+  {
     hash: 'l0m1n2o',
     message: 'Merged branches feature and main',
     author: 'Alice',
     date: '2024-06-04T16:45:00',
     branch: 'main',
     parents: ['d4e5f6g', 'h7i8j9k'],
-    isHead: true,
+    isHead: false,
     changes: [
       { file: 'feature2.js', status: 'added', lines: '+50' }
+    ]
+  },
+  {
+    hash: 'm3n4o5p',
+    message: 'Merge feature-y into main',
+    author: 'Alice',
+    date: '2024-06-05T09:00:00',
+    branch: 'main',
+    parents: ['l0m1n2o', 'x9y0z1a'],
+    isHead: false,
+    changes: [
+      { file: 'featureY.js', status: 'modified', lines: '+30 -5' }
+    ]
+  },
+  {
+    hash: 'q6r7s8t',
+    message: 'Release v1.0',
+    author: 'Alice',
+    date: '2024-06-06T12:00:00',
+    branch: 'main',
+    parents: ['m3n4o5p'],
+    isHead: true,
+    changes: [
+      { file: 'README.md', status: 'modified', lines: '+1' }
     ]
   }
 ];
@@ -106,17 +190,6 @@ function renderGitTree() {
     <span>Commit ID</span>
   `;
   fragment.appendChild(header);
-
-  // Add a legend for branch colors (top of tree)
-  const legendElem = document.createElement('div');
-  legendElem.className = 'git-graph-legend';
-  legendElem.innerHTML = Object.entries(getBranchMap(commits)).map(([branch, info]) =>
-    `<span class="git-graph-legend-item">
-      <span class="git-graph-legend-dot" style="border-color:${info.color};background:${info.color};"></span>
-      ${branch}
-    </span>`
-  ).join('');
-  fragment.appendChild(legendElem);
 
   // Sort commits by date (newest first)
   const displayCommits = [...commits].sort((a, b) => 
@@ -199,7 +272,7 @@ function renderGitTree() {
   if (headerRow) svgTop += headerRow.offsetHeight;
   const legendNode = gitTree.querySelector('.git-graph-legend');
   if (legendNode) svgTop += legendNode.offsetHeight;
-  svgTop += rowHeight / 2; // Add half row height to center the dots
+  svgTop += rowHeight / 2; // Shift SVG down by half a row height
 
   // SVG covers the commit rows area
   const svgHeight = displayCommits.length * rowHeight;
@@ -209,7 +282,7 @@ function renderGitTree() {
   graphSvg.setAttribute("class", "commit-graph-svg");
   graphSvg.style.position = "absolute";
   graphSvg.style.left = `${graphLeft}px`;
-  graphSvg.style.top = `${svgTop}px`;
+  graphSvg.style.top = `${svgTop}px`; // svgTop is now just header+legend height
   graphSvg.style.pointerEvents = "none";
   graphSvg.style.zIndex = "1000";
 
@@ -240,12 +313,14 @@ function renderGitTree() {
         const parentCol = commitLanes.get(parentCommit);
         const x2 = graphWidth / (numCols + 1) * (parentCol + 1);
         const y2 = parentRow * rowHeight;
+        // Instead of diagonal, go horizontal then vertical (L-shaped)
+        // 1. Go horizontally from (x1, y1) to (x2, y1)
+        // 2. Then vertically from (x2, y1) to (x2, y2)
+        // Use a path with two segments
         const isMerge = commit.parents.length > 1 && parentIndex > 0;
-        const curveFactor = Math.min(80, Math.max(20, Math.abs(colIdx - parentCol) * 25));
-        const d = isMerge 
-          ? `M${x1},${y1} C${x1},${y1 + curveFactor*0.7} ${x2},${y2 - curveFactor*0.5} ${x2},${y2}`
-          : `M${x1},${y1} C${x1},${y1 + curveFactor} ${x2},${y2 - curveFactor} ${x2},${y2}`;
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const midX = x2;
+        const d = `M${x1},${y1} L${midX},${y1} L${midX},${y2}`;
         path.setAttribute("d", d);
         path.setAttribute("stroke", branchMap[commit.branch]?.color || branchColors[0]);
         path.setAttribute("stroke-width", isMerge ? "2.5" : "3");
