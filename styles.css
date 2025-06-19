@@ -1,14 +1,34 @@
-html,
-body {
+/* Base Styles */
+:root {
+  --primary-bg: #1e1e1e;
+  --panel-bg: #252526;
+  --header-bg: #2c3039;
+  --node-bg: #2d2d2d;
+  --node-hover-bg: #343842;
+  --border-color: #3d424d;
+  --text-primary: #d4d4d4;
+  --text-secondary: #9cdcfe;
+  --text-muted: #9da5b4;
+  --branch-line-opacity: 0.25;
+  --commit-dot-size: 18px;
+  --head-color: #ff7b26;
+  --merge-color: #c678dd;
+  --add-color: #98c379;
+  --modify-color: #56b6c2;
+  --delete-color: #e06c75;
+}
+
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
-  font-family: monospace, sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   overflow: hidden;
 }
 
+/* Menu Bar */
 .menu-bar {
   position: fixed;
   top: 0;
@@ -21,15 +41,14 @@ body {
   box-sizing: border-box;
   z-index: 100;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid #4d4d4d;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.tools-left,
-.tools-center,
-.tools-right {
+.tools-left, .tools-center, .tools-right {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 0 15px;
 }
 
 .tools-center {
@@ -54,34 +73,28 @@ body {
 
 .tool:hover {
   background-color: #4d4d4d;
-  transform: translateY(-2px);
-}
-
-.tool:active {
-  transform: translateY(1px);
 }
 
 .tool img {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 
+/* Right Panel */
 .right-panel {
   position: fixed;
   top: 50px;
   right: 0;
   height: calc(100% - 50px);
   width: 350px;
-  background-color: #252526;
-  border-left: 1px solid #3c3c3c;
+  background-color: var(--panel-bg);
+  border-left: 1px solid var(--border-color);
   box-sizing: border-box;
   overflow-y: auto;
   z-index: 50;
   transform: translateX(100%);
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .right-panel.open {
@@ -90,11 +103,11 @@ body {
 
 .panel-header {
   padding: 15px 20px;
-  border-bottom: 1px solid #3c3c3c;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #2d2d2d;
+  background-color: var(--header-bg);
 }
 
 .panel-header h2 {
@@ -106,7 +119,7 @@ body {
 .close-panel {
   background: none;
   border: none;
-  color: #d4d4d4;
+  color: var(--text-primary);
   font-size: 1.5rem;
   cursor: pointer;
   width: 30px;
@@ -124,9 +137,9 @@ body {
 
 .commit-details {
   padding: 20px;
-  flex: 1;
 }
 
+/* Main Content Area */
 .content-area {
   position: fixed;
   top: 50px;
@@ -135,58 +148,78 @@ body {
   bottom: 0;
   overflow: auto;
   box-sizing: border-box;
-  padding: 0;
-  background-color: #1e1e1e;
+  background-color: var(--primary-bg);
   z-index: 10;
 }
 
 .git-tree-container {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 20px;
 }
 
 .git-tree {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  background-color: #252526;
-  height: calc(100vh - 51px);
-  padding: 20px 0;
-  position: relative;
+  background-color: var(--panel-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Git Tree Header */
 .git-tree-header {
   display: grid;
-  grid-template-columns: 120px 60px 1fr 160px 120px;
+  grid-template-columns: 150px 110px 1fr 200px 100px;
   align-items: center;
-  padding: 0 20px 8px 20px;
-  color: #9cdcfe;
-  font-size: 0.95rem;
+  padding: 12px 20px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
   font-weight: 600;
-  border-bottom: 1px solid #3c3c3c;
-  margin-bottom: 8px;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
+/* Commit Node Styling */
 .commit-node {
   display: grid;
-  grid-template-columns: 120px 60px 1fr 160px 120px;
+  grid-template-columns: 150px 110px 1fr 200px 100px;
   align-items: center;
-  padding: 8px 20px;
-  background-color: #2d2d2d;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  width: 100%;
+  padding: 12px 20px;
+  background-color: var(--node-bg);
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  border: 1px solid #3c3c3c;
-  transition: all 0.2s ease;
   position: relative;
-  z-index: 2;
+  z-index: 10; /* Lower than .commit-graph-cell svg */
 }
 
 .commit-node:hover {
-  background-color: #3c3c3c;
+  background-color: var(--node-hover-bg);
   transform: translateX(5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  z-index: 10;
 }
 
+.head-commit {
+  background-color: var(--node-hover-bg);
+  border-left: 3px solid var(--head-color);
+}
+
+.head-commit::after {
+  content: 'HEAD';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: var(--head-color);
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+/* Branch/Tag Styling */
 .commit-branch-tag {
   display: flex;
   gap: 6px;
@@ -194,116 +227,286 @@ body {
 }
 
 .branch-tag {
-  background-color: #007acc;
-  color: white;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-right: 0;
-  position: static;
-  transform: none;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: transform 0.2s;
 }
 
+.branch-tag:hover {
+  transform: translateY(-1px);
+}
+
+.head-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.commit-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid #5d7a9e;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #88b0e8;
+  background-color: rgba(93, 122, 158, 0.1);
+}
+
+/* --- Git Graph Professional Enhancements --- */
+
+/* Graph Cell Styling */
 .commit-graph-cell {
   position: relative;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  background: rgba(40,40,40,0.7);
-  border-radius: 6px;
-  min-width: 56px;
-  min-height: 32px;
-  padding: 0 4px;
+  height: 54px; /* Increased for clarity */
   overflow: visible;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(60, 60, 70, 0.07),
+    rgba(60, 60, 70, 0.07) 1px,
+    transparent 1px,
+    transparent 54px
+  );
+  /* Subtle grid lines for orientation */
+  z-index: 1000;
+  transition: background 0.2s;
+  border-left: 3px solid var(--border-color);
 }
 
+.commit-graph-cell svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scale(1.02);
+  z-index: 2000; /* Ensure SVG is above commit nodes */
+  position: relative; /* Needed for z-index to take effect */
+  pointer-events: none;
+}
+
+/* Branch Lines */
+.commit-path {
+  stroke-linecap: round;
+  stroke-width: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s, stroke-width 0.2s, stroke 0.2s;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.15));
+}
+
+.commit-path.branch-main {
+  stroke: #569cd6;
+}
+
+.commit-path.branch-feature {
+  stroke: #98c379;
+}
+
+.commit-path.branch-merge {
+  stroke: #c678dd;
+}
+
+.commit-path:hover {
+  opacity: 1 !important;
+  stroke-width: 6px !important;
+  stroke: #fff !important;
+}
+
+/* Commit Dot Styling */
 .commit-dot {
+  r: 11px !important;
+  stroke-width: 3.5px;
+  stroke-opacity: 1;
+  fill: #222;
+  stroke: #569cd6;
+  transition: all 0.2s;
+  filter: drop-shadow(0 0 6px rgba(86,156,214,0.25));
+  cursor: pointer;
+  z-index: 3;
+}
+
+.commit-dot.merge {
+  stroke: var(--merge-color);
+  filter: drop-shadow(0 0 8px rgba(198,120,221,0.18));
+}
+
+.commit-dot.added {
+  stroke: var(--add-color);
+  filter: drop-shadow(0 0 8px rgba(152,195,121,0.18));
+}
+
+.commit-dot.deleted {
+  stroke: var(--delete-color);
+  filter: drop-shadow(0 0 8px rgba(224,108,117,0.18));
+}
+
+.commit-dot.head-dot {
+  stroke: var(--head-color);
+  filter: drop-shadow(0 0 12px rgba(255,123,38,0.25));
+  animation: pulse 1.5s infinite;
+}
+
+.commit-dot:hover {
+  r: 14px !important;
+  stroke-width: 5px;
+  filter: drop-shadow(0 0 16px rgba(86,156,214,0.35));
+}
+
+/* Tooltip for commit dots */
+.commit-dot[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: -32px;
+  transform: translateX(-50%);
+  background: #23272e;
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+/* Legend for graph colors */
+.git-graph-legend {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin: 18px 0 0 12px;
+  font-size: 0.93rem;
+  color: var(--text-muted);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.git-graph-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.git-graph-legend-dot {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: #4ec9b0;
-  z-index: 2;
+  display: inline-block;
+  margin-right: 4px;
+  border: 2.5px solid #222;
 }
 
-.commit-dot.branch-tip, .commit-graph-cell div > div.branch-tip {
-  box-shadow: 0 0 8px 2px #4ec9b088;
-  border: 2.5px solid #fff2;
+.git-graph-legend-dot.main {
+  border-color: #569cd6;
 }
 
-/* SVG commit dot styling */
-.commit-dot-svg {
-  filter: drop-shadow(0 2px 6px #000a);
-  cursor: pointer;
-  transition: stroke-width 0.2s, filter 0.2s;
+.git-graph-legend-dot.feature {
+  border-color: #98c379;
 }
 
-.commit-dot-svg:hover {
-  stroke-width: 4px;
-  filter: drop-shadow(0 0 10px #fff8);
+.git-graph-legend-dot.merge {
+  border-color: #c678dd;
 }
 
-.connection-line {
-  position: absolute;
-  width: 2px;
-  background-color: #4ec9b0;
-  z-index: 1;
-  pointer-events: none;
-  left: 50%;
-  transform: translateX(-50%);
+.git-graph-legend-dot.head {
+  border-color: #ff7b26;
 }
 
-.horizontal-line {
-  position: absolute;
-  height: 2px;
-  background-color: #4ec9b0;
-  z-index: 1;
-  pointer-events: none;
+.git-graph-legend-dot.added {
+  border-color: #98c379;
 }
 
+.git-graph-legend-dot.deleted {
+  border-color: #e06c75;
+}
+
+/* Increase spacing for clarity */
+.git-tree-header,
+.commit-node {
+  min-height: 54px;
+}
+
+/* Text Styling */
 .commit-message {
-  font-size: 1rem;
-  color: #d4d4d4;
-  padding-left: 0;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.message-text {
+  display: inline-block;
+  max-width: calc(100% - 60px);
+  vertical-align: middle;
+}
+
+.merge-indicator {
+  display: inline-block;
+  background-color: var(--merge-color);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
 }
 
 .commit-date {
   color: #b5cea8;
-  font-size: 0.97rem;
+  font-size: 0.9rem;
 }
 
 .commit-sha {
-  color: #9cdcfe;
-  font-size: 0.93rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
   font-family: monospace;
-  word-break: break-all;
 }
 
-/* Commit details styles */
+/* Commit Details Styling */
 .commit-header {
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #3c3c3c;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .commit-header h3 {
   margin: 0 0 10px 0;
-  color: #d4d4d4;
+  color: var(--text-primary);
+  font-size: 1.2rem;
 }
 
 .commit-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  font-size: 0.9rem;
-  color: #9cdcfe;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.commit-meta span {
+  display: inline-block;
 }
 
 .changes-list h4 {
-  margin: 0 0 10px 0;
-  color: #d4d4d4;
+  margin: 0 0 15px 0;
+  color: var(--text-primary);
   font-weight: 500;
+  font-size: 1rem;
 }
 
 .changes-list ul {
@@ -316,52 +519,54 @@ body {
   display: flex;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #3c3c3c;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .change-status {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 3px;
   margin-right: 10px;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .change-added {
-  background-color: #587b0f;
-  color: #b5cea8;
+  background-color: var(--add-color);
+  color: #1e1e1e;
 }
 
 .change-modified {
-  background-color: #0c7d9d;
-  color: #9cdcfe;
+  background-color: var(--modify-color);
+  color: #1e1e1e;
 }
 
 .change-deleted {
-  background-color: #94151b;
-  color: #f48771;
+  background-color: var(--delete-color);
+  color: white;
 }
 
 .change-file {
   flex-grow: 1;
-  color: #d4d4d4;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
 }
 
 .change-lines {
   color: #858585;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  font-family: monospace;
 }
 
-.commit-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
+/* Buttons */
 .btn {
   padding: 8px 15px;
   background-color: #007acc;
@@ -370,79 +575,11 @@ body {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 0.9rem;
 }
 
 .btn:hover {
   background-color: #0062a3;
-}
-
-.commit-header h3 {
-  margin: 0 0 10px 0;
-  color: #d4d4d4;
-}
-
-.commit-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  font-size: 0.9rem;
-  color: #9cdcfe;
-}
-
-.changes-list h4 {
-  margin: 0 0 10px 0;
-  color: #d4d4d4;
-  font-weight: 500;
-}
-
-.changes-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.changes-list li {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #3c3c3c;
-}
-
-.change-status {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  margin-right: 10px;
-  font-weight: bold;
-  font-size: 0.8rem;
-}
-
-.change-added {
-  background-color: #587b0f;
-  color: #b5cea8;
-}
-
-.change-modified {
-  background-color: #0c7d9d;
-  color: #9cdcfe;
-}
-
-.change-deleted {
-  background-color: #94151b;
-  color: #f48771;
-}
-
-.change-file {
-  flex-grow: 1;
-  color: #d4d4d4;
-}
-
-.change-lines {
-  color: #858585;
-  font-size: 0.9rem;
 }
 
 .commit-actions {
@@ -451,42 +588,73 @@ body {
   margin-top: 20px;
 }
 
-.btn {
-  padding: 8px 15px;
-  background-color: #007acc;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+  .git-tree-header,
+  .commit-node {
+    grid-template-columns: 130px 90px 1fr 170px 90px;
+  }
 }
 
-.btn:hover {
-  background-color: #0062a3;
+@media (max-width: 900px) {
+  .right-panel {
+    width: 300px;
+  }
+  
+  .git-tree-header,
+  .commit-node {
+    grid-template-columns: 110px 70px 1fr 150px 80px;
+  }
+  
+  .commit-message {
+    font-size: 0.85rem;
+  }
+  
+  .commit-date {
+    font-size: 0.8rem;
+  }
+  
+  .branch-tag {
+    max-width: 100px;
+  }
 }
 
-.commit-graph-cell div > div {
-  /* fallback for dot shadow if needed */
-  box-shadow: 0 2px 6px #000a;
+@media (max-width: 700px) {
+  .git-tree-header,
+  .commit-node {
+    grid-template-columns: 90px 60px 1fr 120px 70px;
+    padding: 10px 15px;
+  }
+  
+  .commit-message {
+    font-size: 0.8rem;
+  }
+  
+  .commit-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .branch-tag {
+    max-width: 60px;
+    font-size: 10px;
+    padding: 2px 6px;
+  }
 }
 
-.commit-graph-cell div > div[title] {
-  cursor: pointer;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.commit-graph-cell div > div[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  left: 120%;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #222;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 5px;
-  font-size: 0.95em;
-  white-space: pre-line;
-  z-index: 999;
-  box-shadow: 0 2px 8px #000a;
-  pointer-events: none;
+.commit-node {
+  animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* SVG Glow Filter */
+svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  z-index: 5;
+}
+

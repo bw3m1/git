@@ -10,58 +10,63 @@ const commits = [
     hash: 'a1b2c3d',
     message: 'Initial commit',
     author: 'Alice',
-    date: '2024-06-01',
+    date: '2024-06-01T10:00:00',
     branch: 'main',
     parents: [],
-    col: 2,
+    isHead: false,
     changes: [
       { file: 'README.md', status: 'added', lines: '+10' }
-    ]
-  },
-  {
-    hash: 'h7i8j9k',
-    message: 'Started branch: "feature"',
-    author: 'Carol',
-    date: '2024-06-03',
-    branch: 'feature',
-    parents: ['d4e5f6g'],
-    col: 3,
-    changes: [
-      { file: 'feature.js', status: 'added', lines: '+50' }
     ]
   },
   {
     hash: 'd4e5f6g',
     message: 'Added feature X',
     author: 'Bob',
-    date: '2024-06-02',
+    date: '2024-06-02T14:30:00',
     branch: 'feature',
     parents: ['a1b2c3d'],
-    col: 2,
+    isHead: false,
     changes: [
       { file: 'feature.js', status: 'added', lines: '+120' },
       { file: 'README.md', status: 'modified', lines: '+2 -1' }
     ]
   },
   {
+    hash: 'h7i8j9k',
+    message: 'Started branch: "feature"',
+    author: 'Carol',
+    date: '2024-06-03T09:15:00',
+    branch: 'feature',
+    parents: ['d4e5f6g'],
+    isHead: false,
+    changes: [
+      { file: 'feature.js', status: 'added', lines: '+50' }
+    ]
+  },
+  {
     hash: 'l0m1n2o',
     message: 'Merged branches feature and main',
     author: 'Alice',
-    date: '2024-06-04',
+    date: '2024-06-04T16:45:00',
     branch: 'main',
     parents: ['d4e5f6g', 'h7i8j9k'],
-    col: 2,
+    isHead: true,
     changes: [
       { file: 'feature2.js', status: 'added', lines: '+50' }
     ]
   }
 ];
 
-// Assign a color to each branch
+// GitKraken-like branch colors
 const branchColors = [
   "#1b647c", // teal
   "#11448d", // blue
-  "#550f72" // purple
+  "#550f72", // purple
+  "#711b6c", // pink-ish
+  "#7b104a", // red-ish
+  "#751012", // dark red
+  "#873e28", // oringe-ish
+  "#87742b"  // yellow-ish
 ];
 
 // Dynamically assign columns and colors to branches
@@ -85,13 +90,9 @@ function getBranch(commit) {
   return commit.branch || '';
 }
 
-// Helper to get parent commit object
-function getCommitByHash(hash) {
-  return commits.find(c => c.hash === hash);
-}
-
-// Render the commit tree with SVG graph
 function renderGitTree() {
+  // Use document fragment for batch DOM updates
+  const fragment = document.createDocumentFragment();
   gitTree.innerHTML = '';
 
   // Add header row
@@ -102,138 +103,218 @@ function renderGitTree() {
     <span>Graph</span>
     <span>Commit Message</span>
     <span>Date / Time</span>
-    <span>SHA</span>
+    <span>Commit ID</span>
   `;
-  gitTree.appendChild(header);
+  fragment.appendChild(header);
 
-  // Reverse for newest at top
-  const displayCommits = [...commits].reverse();
+  // Sort commits by date (newest first)
+  const displayCommits = [...commits].sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
 
-  // Assign columns/colors to branches
+  // Assign columns/colors to branches with better distribution
   const branchMap = getBranchMap(displayCommits);
+  const numCols = Math.max(3, Object.keys(branchMap).length); // Minimum 3 columns for better spacing
+  const cellWidth = 30;
+  const cellHeight = 44; // Slightly taller for better curves
 
   // Map from hash to row index for graph lines
   const hashToRow = {};
   displayCommits.forEach((c, i) => { hashToRow[c.hash] = i; });
 
-  // For each commit, render a row
+  // Precompute commit branches and lane information
+  const commitBranches = new Map();
+  const commitLanes = new Map();
+  displayCommits.forEach(commit => {
+    commitBranches.set(commit, getBranch(commit));
+    commitLanes.set(commit, branchMap[getBranch(commit)]?.col || 0);
+  });
+
+  // Track active branches for continuous lines
+  const activeBranches = new Set();
+
+  // For each commit, render a row (from newest to oldest)
   displayCommits.forEach((commit, idx) => {
     const node = document.createElement('div');
-    node.className = 'commit-node';
+    node.className = `commit-node${commit.isHead ? ' head-commit' : ''}`;
     node.setAttribute('data-hash', commit.hash);
 
-    // Branch/Tag cell
+    // Branch/Tag cell with improved styling
     let branchTagHtml = '';
     if (commit.branch) {
-      branchTagHtml += `<span class="branch-tag" style="background:${branchMap[commit.branch].color}">${commit.branch}</span>`;
+      const branchColor = branchMap[commit.branch]?.color || branchColors[0];
+      branchTagHtml += `
+        <span class="branch-tag" style="background:${branchColor};color:${getContrastColor(branchColor)}">
+          ${commit.branch}
+          ${commit.isHead ? '<span class="head-indicator"></span>' : ''}
+        </span>`;
     }
 
-    // SVG graph cell
+    // SVG graph cell - enhanced for GitKraken look
     const graphCell = document.createElement('div');
     graphCell.className = 'commit-graph-cell';
-    const branch = getBranch(commit);
-    const colIdx = branchMap[branch] ? branchMap[branch].col : 0;
-    const color = branchMap[branch] ? branchMap[branch].color : branchColors[0];
-    const numCols = Object.keys(branchMap).length || 1;
-    const cellWidth = 28;
-    const cellHeight = 32;
+    
+    const branch = commitBranches.get(commit);
+    const branchInfo = branchMap[branch] || { col: 0, color: branchColors[0] };
+    const colIdx = branchInfo.col;
+    const color = branchInfo.color;
     const svgWidth = cellWidth * numCols;
-    const svgHeight = cellHeight;
 
-    // SVG for lines and dots
+    // Create SVG with improved dimensions
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width", svgWidth);
-    svg.setAttribute("height", svgHeight);
+    svg.setAttribute("height", cellHeight);
+    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${cellHeight}`);
     svg.style.overflow = "visible";
 
-    // Draw lines from parents to this commit
+    // Draw vertical branch lines with gradient effect
+    Object.entries(branchMap).forEach(([b, info]) => {
+      const x = cellWidth / 2 + info.col * cellWidth;
+      const isActive = activeBranches.has(b);
+      const opacity = isActive ? 0.25 : 0.15;
+      
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x);
+      line.setAttribute("y1", 0);
+      line.setAttribute("x2", x);
+      line.setAttribute("y2", cellHeight);
+      line.setAttribute("stroke", info.color);
+      line.setAttribute("stroke-width", isActive ? "3.5" : "2.5");
+      line.setAttribute("opacity", opacity);
+      if (!isActive) {
+        line.setAttribute("stroke-dasharray", "3,3");
+      }
+      svg.appendChild(line);
+    });
+
+    // Update active branches
     commit.parents.forEach(parentHash => {
-      const parentIdx = hashToRow[parentHash];
-      if (parentIdx !== undefined) {
-        const parentCommit = displayCommits[parentIdx];
-        const parentBranch = getBranch(parentCommit);
-        const parentCol = branchMap[parentBranch] ? branchMap[parentBranch].col : 0;
-        const parentColor = branchMap[parentBranch] ? branchMap[parentBranch].color : branchColors[0];
-        // Draw a line from parent dot to this dot
-        const x1 = cellWidth / 2 + parentCol * cellWidth;
-        const y1 = svgHeight + 2; // bottom of this cell
-        const x2 = cellWidth / 2 + colIdx * cellWidth;
-        const y2 = -2; // top of this cell
-        // If same column, draw straight line; else, draw a curve
-        if (parentCol === colIdx) {
-          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-          line.setAttribute("x1", x1);
-          line.setAttribute("y1", y1);
-          line.setAttribute("x2", x2);
-          line.setAttribute("y2", y2);
-          line.setAttribute("stroke", parentColor);
-          line.setAttribute("stroke-width", "2.5");
-          svg.appendChild(line);
-        } else {
-          // Draw a cubic Bezier curve for merge/split
-          const curve = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          const d = `M${x1},${y1} C${x1},${svgHeight/2} ${x2},${svgHeight/2} ${x2},${y2}`;
-          curve.setAttribute("d", d);
-          curve.setAttribute("stroke", parentColor);
-          curve.setAttribute("stroke-width", "2.5");
-          curve.setAttribute("fill", "none");
-          svg.appendChild(curve);
-        }
+      const parentRow = hashToRow[parentHash];
+      if (parentRow !== undefined) {
+        const parentCommit = displayCommits[parentRow];
+        const parentBranch = commitBranches.get(parentCommit);
+        if (parentBranch) activeBranches.add(parentBranch);
       }
     });
 
-    // Draw vertical lines for ongoing branches (future children)
-    Object.entries(branchMap).forEach(([b, {col, color: bColor}]) => {
-      // If this branch continues below, draw a faint vertical line
-      let continues = false;
-      for (let j = idx + 1; j < displayCommits.length; ++j) {
-        const nextCommit = displayCommits[j];
-        if (getBranch(nextCommit) === b && nextCommit.parents.includes(commit.hash)) {
-          continues = true;
-          break;
-        }
-      }
-      if (continues || getBranch(commit) === b) {
-        const x = cellWidth / 2 + col * cellWidth;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", x);
-        line.setAttribute("y1", cellHeight / 2);
-        line.setAttribute("x2", x);
-        line.setAttribute("y2", svgHeight + 2);
-        line.setAttribute("stroke", bColor);
-        line.setAttribute("stroke-width", "1.2");
-        line.setAttribute("opacity", "0.35");
-        svg.appendChild(line);
+    // Draw connections to parents with smoother curves
+    commit.parents.forEach((parentHash, parentIndex) => {
+      const parentRow = hashToRow[parentHash];
+      if (parentRow !== undefined) {
+        const parentCommit = displayCommits[parentRow];
+        const parentBranch = commitBranches.get(parentCommit);
+        const parentInfo = branchMap[parentBranch] || { col: 0, color: branchColors[0] };
+        
+        const x1 = cellWidth / 2 + colIdx * cellWidth;
+        const y1 = cellHeight / 2;
+        const x2 = cellWidth / 2 + parentInfo.col * cellWidth;
+        const y2 = cellHeight / 2 + (parentRow - idx) * cellHeight;
+        const isMerge = commit.parents.length > 1 && parentIndex > 0;
+
+        // Enhanced Bezier curves with dynamic control points
+        const curveFactor = Math.min(80, Math.max(20, Math.abs(colIdx - parentInfo.col) * 25));
+        const d = isMerge 
+          ? `M${x1},${y1} C${x1},${y1 + curveFactor*0.7} ${x2},${y2 - curveFactor*0.5} ${x2},${y2}`
+          : `M${x1},${y1} C${x1},${y1 + curveFactor} ${x2},${y2 - curveFactor} ${x2},${y2}`;
+        
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", d);
+        path.setAttribute("stroke", parentInfo.color);
+        path.setAttribute("stroke-width", isMerge ? "2.5" : "3");
+        path.setAttribute("fill", "none");
+        path.setAttribute("opacity", isMerge ? "0.7" : "0.9");
+        path.setAttribute("class", "commit-path");
+        svg.appendChild(path);
       }
     });
 
-    // Draw the commit dot
+    // Draw the commit dot with enhanced styling
     const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    dot.setAttribute("cx", cellWidth / 2 + colIdx * cellWidth);
+    const dotX = cellWidth / 2 + colIdx * cellWidth;
+    dot.setAttribute("cx", dotX);
     dot.setAttribute("cy", cellHeight / 2);
-    dot.setAttribute("r", "8");
-    dot.setAttribute("fill", color);
-    dot.setAttribute("stroke", "#fff");
-    dot.setAttribute("stroke-width", commit.branch ? "2.5" : "1.5");
-    dot.setAttribute("class", "commit-dot-svg");
+    dot.setAttribute("r", "9");
+    dot.setAttribute("fill", commit.isHead ? '#ff7b26' : color);
+    dot.setAttribute("stroke", "#ffffff");
+    dot.setAttribute("stroke-width", commit.isHead ? "3" : "2");
+    dot.setAttribute("class", "commit-dot");
+    dot.setAttribute("filter", "url(#commit-glow)");
     svg.appendChild(dot);
+
+    // Add glow filter for commit dots
+    const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    filter.setAttribute("id", "commit-glow");
+    filter.setAttribute("x", "-30%");
+    filter.setAttribute("y", "-30%");
+    filter.setAttribute("width", "160%");
+    filter.setAttribute("height", "160%");
+    const feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+    feGaussianBlur.setAttribute("stdDeviation", "2");
+    feGaussianBlur.setAttribute("result", "blur");
+    const feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+    feComposite.setAttribute("in", "SourceGraphic");
+    feComposite.setAttribute("in2", "blur");
+    feComposite.setAttribute("operator", "over");
+    filter.appendChild(feGaussianBlur);
+    filter.appendChild(feComposite);
+    svg.appendChild(filter);
+
+    // Draw HEAD indicator with animation
+    if (commit.isHead) {
+      const headIndicator = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      headIndicator.setAttribute("cx", dotX);
+      headIndicator.setAttribute("cy", cellHeight / 2);
+      headIndicator.setAttribute("r", "5");
+      headIndicator.setAttribute("fill", "#ffffff");
+      headIndicator.setAttribute("class", "head-dot");
+      svg.appendChild(headIndicator);
+    }
 
     graphCell.appendChild(svg);
 
-    // Compose row
+    // Compose row with improved structure
     node.innerHTML = `
       <div class="commit-branch-tag">${branchTagHtml}</div>
-      <div class="commit-graph-cell"></div>
-      <div class="commit-message">${commit.message}</div>
-      <div class="commit-date">${commit.date}</div>
-      <div class="commit-sha">${commit.hash}</div>
+      <div class="commit-graph"></div>
+      <div class="commit-message">
+        <span class="message-text">${commit.message}</span>
+        ${commit.parents.length > 1 ? '<span class="merge-indicator">Merge</span>' : ''}
+      </div>
+      <div class="commit-date">${formatDateTime(commit.date)}</div>
+      <div class="commit-sha">${commit.hash.substring(0, 7)}</div>
     `;
-    // Replace the empty graph cell with the one we built (with SVG)
-    node.replaceChild(graphCell, node.children[1]);
 
+    // Insert graph
+    node.querySelector('.commit-graph').replaceWith(graphCell);
     node.addEventListener('click', () => showCommitDetails(commit));
-    gitTree.appendChild(node);
+    fragment.appendChild(node);
+
+    // Update active branches after rendering
+    if (branch) activeBranches.add(branch);
   });
+
+  gitTree.appendChild(fragment);
+}
+
+// Helper to get contrasting text color
+function getContrastColor(hexColor) {
+  const r = parseInt(hexColor.substr(1, 2), 16);
+  const g = parseInt(hexColor.substr(3, 2), 16);
+  const b = parseInt(hexColor.substr(5, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 150 ? '#222' : '#fff';
+}
+
+// Helper functions
+function formatDateTime(dateString) {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
 }
 
 // Show commit details in the right panel
@@ -245,7 +326,7 @@ function showCommitDetails(commit) {
       <div class="commit-meta">
         <span>Hash: ${commit.hash}</span>
         <span>Author: ${commit.author}</span>
-        <span>Date: ${commit.date}</span>
+        <span>Date: ${formatDateTime(commit.date)}</span>
         ${commit.branch ? `<span>Branch: ${commit.branch}</span>` : ''}
       </div>
     </div>
