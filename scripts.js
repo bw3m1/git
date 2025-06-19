@@ -65,7 +65,7 @@ const branchColors = [
   "#711b6c", // pink-ish
   "#7b104a", // red-ish
   "#751012", // dark red
-  "#873e28", // oringe-ish
+  "#873e28", // orange-ish
   "#87742b"  // yellow-ish
 ];
 
