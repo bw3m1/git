@@ -125,9 +125,8 @@ function renderGitTree() {
 
   // Assign columns/colors to branches with better distribution
   const branchMap = getBranchMap(displayCommits);
-  const numCols = Math.max(3, Object.keys(branchMap).length); // Minimum 3 columns for better spacing
+  const numCols = Math.max(3, Object.keys(branchMap).length);
   const cellWidth = 30;
-  const rowHeight = 54; // Match CSS min-height for .commit-node
 
   // Map from hash to row index for graph lines
   const hashToRow = {};
@@ -141,7 +140,7 @@ function renderGitTree() {
     commitLanes.set(commit, branchMap[getBranch(commit)]?.col || 0);
   });
 
-  // --- Render commit rows (without per-row SVG) ---
+  // Render commit rows
   displayCommits.forEach((commit, idx) => {
     const node = document.createElement('div');
     node.className = `commit-node${commit.isHead ? ' head-commit' : ''}`;
@@ -173,24 +172,21 @@ function renderGitTree() {
     fragment.appendChild(node);
   });
 
-  // --- Calculate SVG overlay alignment ---
-  // Remove any previous SVG overlays
-  const prevSvg = gitTree.querySelector('.commit-graph-svg');
-  if (prevSvg) prevSvg.remove();
-
-  // Temporarily add fragment to measure positions
+  // Add fragment to measure positions
   gitTree.style.position = "relative";
   gitTree.appendChild(fragment);
 
-  // --- Fix: Use getBoundingClientRect for precise SVG alignment ---
-  // Find the "Graph" column offset and width RELATIVE TO .git-tree
+  // Get the first commit node to measure row height
+  const firstCommitNode = gitTree.querySelector('.commit-node');
+  const rowHeight = firstCommitNode ? firstCommitNode.offsetHeight : 54;
+
+  // Find the "Graph" column offset and width
   let graphLeft = 0, graphWidth = 110;
   const headerRow = gitTree.querySelector('.git-tree-header');
   if (headerRow) {
     const headerCells = headerRow.children;
     if (headerCells.length >= 2) {
       const graphCell = headerCells[1];
-      // Use getBoundingClientRect relative to .git-tree
       const treeRect = gitTree.getBoundingClientRect();
       const cellRect = graphCell.getBoundingClientRect();
       graphLeft = cellRect.left - treeRect.left;
@@ -198,11 +194,12 @@ function renderGitTree() {
     }
   }
 
-  // Calculate SVG top offset: header + legend heights
+  // Calculate SVG top offset: header + legend heights + half row height
   let svgTop = 0;
   if (headerRow) svgTop += headerRow.offsetHeight;
   const legendNode = gitTree.querySelector('.git-graph-legend');
   if (legendNode) svgTop += legendNode.offsetHeight;
+  svgTop += rowHeight / 2; // Add half row height to center the dots
 
   // SVG covers the commit rows area
   const svgHeight = displayCommits.length * rowHeight;
@@ -235,14 +232,14 @@ function renderGitTree() {
   displayCommits.forEach((commit, idx) => {
     const colIdx = commitLanes.get(commit);
     const x1 = graphWidth / (numCols + 1) * (colIdx + 1);
-    const y1 = idx * rowHeight + rowHeight / 2;
+    const y1 = idx * rowHeight;
     commit.parents.forEach((parentHash, parentIndex) => {
       const parentRow = hashToRow[parentHash];
       if (parentRow !== undefined) {
         const parentCommit = displayCommits[parentRow];
         const parentCol = commitLanes.get(parentCommit);
         const x2 = graphWidth / (numCols + 1) * (parentCol + 1);
-        const y2 = parentRow * rowHeight + rowHeight / 2;
+        const y2 = parentRow * rowHeight;
         const isMerge = commit.parents.length > 1 && parentIndex > 0;
         const curveFactor = Math.min(80, Math.max(20, Math.abs(colIdx - parentCol) * 25));
         const d = isMerge 
@@ -264,7 +261,7 @@ function renderGitTree() {
   displayCommits.forEach((commit, idx) => {
     const colIdx = commitLanes.get(commit);
     const x = graphWidth / (numCols + 1) * (colIdx + 1);
-    const y = idx * rowHeight + rowHeight / 2;
+    const y = idx * rowHeight;
     const color = branchMap[commit.branch]?.color || branchColors[0];
     const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     dot.setAttribute("cx", x);
@@ -310,8 +307,7 @@ function renderGitTree() {
     gitTree.insertBefore(graphSvg, gitTree.firstChild);
   }
 
-  // --- UI fix: scroll graph column into view if needed ---
-  // This helps on small screens so the graph is always visible
+  // Scroll graph column into view if needed
   const container = document.querySelector('.git-tree-container');
   const graphCell = gitTree.querySelector('.commit-node > .commit-graph, .git-tree-header > span:nth-child(2)');
   if (container && graphCell) {
