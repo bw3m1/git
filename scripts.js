@@ -141,16 +141,16 @@ const commits = [
   }
 ];
 
-// GitKraken-like branch colors
+// GitKraken-like branch colors (more vibrant)
 const branchColors = [
-  "#1b647c", // teal
-  "#11448d", // blue
-  "#550f72", // purple
-  "#711b6c", // pink-ish
-  "#7b104a", // red-ish
-  "#751012", // dark red
-  "#873e28", // orange-ish
-  "#87742b"  // yellow-ish
+  "#2ec4b6", // teal
+  "#3a86ff", // blue
+  "#8338ec", // purple
+  "#ff006e", // pink
+  "#ffbe0b", // yellow
+  "#fb5607", // orange
+  "#ff595e", // red
+  "#43aa8b"  // green
 ];
 
 // Dynamically assign columns and colors to branches
@@ -225,6 +225,7 @@ function renderGitTree() {
       const branchColor = branchMap[commit.branch]?.color || branchColors[0];
       branchTagHtml += `
         <span class="branch-tag" style="background:${branchColor};color:${getContrastColor(branchColor)}">
+          <i class="fas fa-code-branch"></i>
           ${commit.branch}
           ${commit.isHead ? '<span class="head-indicator"></span>' : ''}
         </span>`;
@@ -232,7 +233,7 @@ function renderGitTree() {
 
     node.innerHTML = `
       <div class="commit-branch-tag">${branchTagHtml}</div>
-      <div class="commit-graph"></div>
+      <div class="commit-graph commit-graph-cell"></div>
       <div class="commit-message">
         <span class="message-text">${commit.message}</span>
         ${commit.parents.length > 1 ? '<span class="merge-indicator">Merge</span>' : ''}
@@ -301,7 +302,7 @@ function renderGitTree() {
     graphSvg.appendChild(line);
   });
 
-  // Draw edges (parent connections)
+  // Draw edges (parent connections) - FIXED COLOR LOGIC
   displayCommits.forEach((commit, idx) => {
     const colIdx = commitLanes.get(commit);
     const x1 = graphWidth / (numCols + 1) * (colIdx + 1);
@@ -313,19 +314,63 @@ function renderGitTree() {
         const parentCol = commitLanes.get(parentCommit);
         const x2 = graphWidth / (numCols + 1) * (parentCol + 1);
         const y2 = parentRow * rowHeight;
-        // Instead of diagonal, go horizontal then vertical (L-shaped)
-        // 1. Go horizontally from (x1, y1) to (x2, y1)
-        // 2. Then vertically from (x2, y1) to (x2, y2)
-        // Use a path with two segments
-        const isMerge = commit.parents.length > 1 && parentIndex > 0;
+        
+        // FIXED: Correct coloring logic
+        let color;
+        if (commit.parents.length > 1) { // Merge commit
+          if (parentIndex === 0) {
+            // First parent - use current branch color
+            color = branchMap[commit.branch]?.color || branchColors[0];
+          } else {
+            // Additional parents - use merged branch's color
+            color = branchMap[parentCommit.branch]?.color || branchColors[0];
+          }
+        } else { // Regular commit
+          // Use current branch color
+          color = branchMap[commit.branch]?.color || branchColors[0];
+        }
+
+        // L-turn with rounded corner, direction depends on merge or branch
+        const isMerge = y2 < y1;
+        const isBranch = y2 > y1;
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const midX = x2;
-        const d = `M${x1},${y1} L${midX},${y1} L${midX},${y2}`;
+        const radius = 14;
+        let d;
+        if (Math.abs(x2 - x1) > 1 && Math.abs(y2 - y1) > 1) {
+          if (isMerge) {
+            // Merge: go up then over (vertical, arc, horizontal)
+            const signX = x2 > x1 ? 1 : -1;
+            const signY = -1;
+            d =
+              `M${x1},${y1} ` +
+              `L${x1},${y2 + signY * radius} ` +
+              `A${radius},${radius} 0 0 ${signX === 1 ? 0 : 1} ` +
+              `${x1 + signX * radius},${y2} ` +
+              `L${x2},${y2}`;
+          } else if (isBranch) {
+            // Branch: go over then up (horizontal, arc, vertical)
+            const signX = x2 > x1 ? 1 : -1;
+            const signY = 1;
+            d =
+              `M${x1},${y1} ` +
+              `L${x2 - signX * radius},${y1} ` +
+              `A${radius},${radius} 0 0 ${signX === 1 ? 1 : 0} ` +
+              `${x2},${y1 + signY * radius} ` +
+              `L${x2},${y2}`;
+          } else {
+            // fallback straight line
+            d = `M${x1},${y1} L${x2},${y2}`;
+          }
+        } else {
+          // Just a straight line (no L)
+          d = `M${x1},${y1} L${x2},${y2}`;
+        }
+        
         path.setAttribute("d", d);
-        path.setAttribute("stroke", branchMap[commit.branch]?.color || branchColors[0]);
-        path.setAttribute("stroke-width", isMerge ? "2.5" : "3");
+        path.setAttribute("stroke", color);  // Use calculated color
+        path.setAttribute("stroke-width", (commit.parents.length > 1 && parentIndex > 0) ? "2.5" : "3");
         path.setAttribute("fill", "none");
-        path.setAttribute("opacity", isMerge ? "0.7" : "0.9");
+        path.setAttribute("opacity", (commit.parents.length > 1 && parentIndex > 0) ? "0.7" : "0.9");
         path.setAttribute("class", "commit-path");
         graphSvg.appendChild(path);
       }
@@ -341,10 +386,10 @@ function renderGitTree() {
     const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     dot.setAttribute("cx", x);
     dot.setAttribute("cy", y);
-    dot.setAttribute("r", "13");
+    dot.setAttribute("r", "14");
     dot.setAttribute("fill", commit.isHead ? '#ff7b26' : color);
     dot.setAttribute("stroke", "#ffffff");
-    dot.setAttribute("stroke-width", commit.isHead ? "4.5" : "3.5");
+    dot.setAttribute("stroke-width", commit.isHead ? "4" : "3.5");
     dot.setAttribute("class", "commit-dot" + (commit.isHead ? " head-dot" : ""));
     dot.setAttribute("tabindex", "0");
     dot.setAttribute("role", "button");

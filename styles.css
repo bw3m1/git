@@ -3,7 +3,6 @@
   --primary-bg: #1e1e1e;
   --panel-bg: #252526;
   --header-bg: #2c3039;
-  --node-bg: #2d2d2d;
   --node-hover-bg: #343842;
   --border-color: #3d424d;
   --text-primary: #d4d4d4;
@@ -34,14 +33,14 @@ html, body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 50px;
-  background-color: #333;
+  height: 44px;
+  background: linear-gradient(90deg, #181c20 80%, #23272e 100%);
   display: flex;
   align-items: center;
   box-sizing: border-box;
   z-index: 100;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid #23272e;
+  box-shadow: 0 2px 8px 0 #000a;
 }
 
 .tools-left, .tools-center, .tools-right {
@@ -66,19 +65,36 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-right: 2px;
+  position: relative;
+}
+
+.tools-center .tool:not(:last-child)::after {
+  content: '';
+  display: block;
+  position: absolute;
+  right: -6px;
+  top: 8px;
+  width: 1.5px;
+  height: 24px;
+  background: #23272e;
+  opacity: 0.5;
+  border-radius: 1px;
 }
 
 .tool:hover {
-  background-color: #4d4d4d;
+  background: #23272e;
+  box-shadow: 0 1px 4px #0002;
 }
 
 .tool img {
   width: 24px;
   height: 24px;
   object-fit: contain;
+  filter: brightness(0.95) contrast(1.1);
 }
 
 /* Right Panel */
@@ -95,6 +111,10 @@ html, body {
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -4px 0 24px 0 #000a;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  overflow: hidden;
 }
 
 .right-panel.open {
@@ -107,7 +127,9 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--header-bg);
+  background: linear-gradient(90deg, #23272e 70%, #252526 100%);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 8px #0002;
 }
 
 .panel-header h2 {
@@ -137,6 +159,9 @@ html, body {
 
 .commit-details {
   padding: 20px;
+  background: #23272e;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 8px #0002;
 }
 
 /* Main Content Area */
@@ -147,7 +172,6 @@ html, body {
   right: 0;
   bottom: 0;
   overflow: auto;
-  box-sizing: border-box;
   background-color: var(--primary-bg);
   z-index: 10;
 }
@@ -163,9 +187,10 @@ html, body {
   display: flex;
   flex-direction: column;
   background-color: var(--panel-bg);
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1.5px solid #23272e;
+  box-shadow: 0 2px 12px #0002;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
   min-width: 700px;
 }
@@ -183,13 +208,14 @@ html, body {
   display: grid;
   grid-template-columns: 150px 110px 1fr 200px 100px;
   align-items: center;
-  padding: 12px 20px;
+  padding: 8px 20px;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  background-color: var(--header-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(90deg, #1e2228 80%, #21252d 100%);
+  border-bottom: 2px solid #23272e;
   z-index: 1;
+  letter-spacing: 0.01em;
 }
 
 /* Commit Node Styling */
@@ -197,43 +223,27 @@ html, body {
   display: grid;
   grid-template-columns: 150px 110px 1fr 200px 100px;
   align-items: center;
-  padding: 12px 20px;
-  background-color: var(--node-bg);
-  border-bottom: 1px solid var(--border-color);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 10px 20px;
+  border-bottom: 1.5px solid #23272e;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.18s;
   cursor: pointer;
   position: relative;
   z-index: 10;
-  min-height: 54px;
+  min-height: 40px;
   box-sizing: border-box;
+  background: #23272e;
+}
+
+.commit-node:nth-child(even) {
+  background: #25282f;
 }
 
 .commit-node:hover {
-  background-color: var(--node-hover-bg);
-  transform: translateX(5px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-  z-index: 10;
+  background: #2c303a;
+  box-shadow: 0 0 0 2px rgba(86, 156, 214, 0.3);
 }
 
-.head-commit {
-  background-color: var(--node-hover-bg);
-  border-left: 3px solid var(--head-color);
-}
-
-.head-commit::after {
-  content: 'HEAD';
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  background: var(--head-color);
-  color: white;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: bold;
-}
-
-/* Branch/Tag Styling */
+/* Improved Branch/Tag Styling */
 .commit-branch-tag {
   display: flex;
   gap: 6px;
@@ -241,32 +251,66 @@ html, body {
 }
 
 .branch-tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 16px;
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  max-width: 140px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: transform 0.2s;
+  box-shadow: 0 1px 4px #0002;
+  border: 1.5px solid #23272e;
+}
+
+.branch-tag i {
+  font-size: 11px;
+  opacity: 0.9;
 }
 
 .branch-tag:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px #0003;
+  background: #23272e;
+  color: #fff;
 }
 
 .head-indicator {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #ff7b26;
   border-radius: 50%;
   margin-left: 6px;
-  vertical-align: middle;
+  position: relative;
+}
+
+.head-indicator::after {
+  content: "HEAD";
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ff7b26;
+  color: white;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.head-indicator:hover::after {
+  opacity: 1;
 }
 
 .commit-tag {
@@ -279,27 +323,24 @@ html, body {
   background-color: rgba(93, 122, 158, 0.1);
 }
 
-/* Graph Cell Styling */
+/* Improved Graph Cell Styling */
 .commit-graph-cell {
   position: relative;
   height: 54px;
   overflow: visible;
-  background: repeating-linear-gradient(
+  background: linear-gradient(
     to bottom,
-    rgba(60, 60, 70, 0.10),
-    rgba(60, 60, 70, 0.10) 1px,
-    transparent 1px,
-    transparent 54px
+    transparent 0%,
+    rgba(60, 60, 70, 0.07) 50%,
+    transparent 100%
   );
   z-index: 1000;
   transition: background 0.2s, box-shadow 0.2s;
-  border-left: 4px solid var(--border-color);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  border-left: 1px solid #3a3f4b;
 }
 
 .commit-graph-cell:hover {
   background: rgba(60, 60, 70, 0.18);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
 }
 
 .commit-graph-cell svg {
@@ -318,7 +359,6 @@ html, body {
   stroke-width: 4px;
   opacity: 0.7;
   transition: opacity 0.2s, stroke-width 0.2s, stroke 0.2s, filter 0.2s;
-  filter: drop-shadow(0 0 4px rgba(0,0,0,0.18));
 }
 
 .commit-path.branch-main {
@@ -337,50 +377,44 @@ html, body {
   opacity: 1 !important;
   stroke-width: 7px !important;
   stroke: #fff !important;
-  filter: drop-shadow(0 0 12px #fff);
 }
 
-/* Commit Dot Styling */
+/* Enhanced Commit Dot Styling */
 .commit-dot {
-  r: 13px !important;
-  stroke-width: 4.5px;
-  stroke-opacity: 1;
+  r: 14px !important;
+  stroke-width: 3.5px;
+  stroke-opacity: 0.9;
   fill: #23272e;
   stroke: #569cd6;
   transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-  filter: drop-shadow(0 0 10px rgba(86,156,214,0.32));
   cursor: pointer;
   z-index: 3;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
 }
 
 .commit-dot.merge {
   stroke: var(--merge-color);
-  filter: drop-shadow(0 0 12px rgba(198,120,221,0.22));
 }
 
 .commit-dot.added {
   stroke: var(--add-color);
-  filter: drop-shadow(0 0 12px rgba(152,195,121,0.22));
 }
 
 .commit-dot.deleted {
   stroke: var(--delete-color);
-  filter: drop-shadow(0 0 12px rgba(224,108,117,0.22));
 }
 
 .commit-dot.head-dot {
   stroke: var(--head-color);
-  filter: drop-shadow(0 0 18px rgba(255,123,38,0.32));
-  animation: pulse 1.5s infinite;
+  animation: pulse 1.5s infinite, glow 2s infinite alternate;
 }
 
 .commit-dot:active,
 .commit-dot:focus,
 .commit-dot:hover {
-  r: 17px !important;
-  stroke-width: 6px;
-  filter: drop-shadow(0 0 22px #fff);
+  r: 16px !important;
+  stroke-width: 4.5px;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
   outline: none;
 }
 
@@ -403,7 +437,6 @@ html, body {
   white-space: nowrap;
   pointer-events: none;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   opacity: 1;
   transition: opacity 0.2s;
 }
@@ -615,19 +648,24 @@ html, body {
 }
 
 @keyframes pulse {
-  0% { r: 13px; }
-  50% { r: 15px; }
-  100% { r: 13px; }
+  0% { r: 14px; }
+  50% { r: 16px; }
+  100% { r: 14px; }
+}
+
+@keyframes glow {
+  0% { filter: drop-shadow(0 0 4px rgba(255, 123, 38, 0.4)); }
+  100% { filter: drop-shadow(0 0 8px rgba(255, 123, 38, 0.8)); }
 }
 
 .commit-node {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* SVG Glow Filter */
-svg {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  z-index: 5;
+/* Make branch lines more subtle */
+.commit-graph-svg line {
+  opacity: 0.1 !important;
+  stroke-dasharray: 4, 6 !important;
 }
 
 /* Touch-friendly: increase tap targets */
@@ -637,8 +675,8 @@ svg {
     stroke-width: 7px;
   }
   .commit-node {
-    min-height: 64px;
-    padding: 18px 20px;
+    min-height: 70px;
+    padding: 15px 20px;
   }
 }
 

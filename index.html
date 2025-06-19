@@ -6,6 +6,18 @@
     <link rel="icon" href="icons/git_icon.svg" type="image/svg+xml">
     <title>git</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      body {
+        background: linear-gradient(120deg, #181c20 80%, #23272e 100%);
+      }
+      .main-content-shadow {
+        box-shadow: 0 4px 32px #0004;
+        border-radius: 16px;
+        margin-top: 30px;
+        background: none;
+      }
+    </style>
   </head>
   <body>
     <div class="menu-bar">
@@ -70,9 +82,14 @@
     </div>
 
     <main class="content-area">
-      <div class="git-tree-container">
-        <div class="git-tree" id="gitTree"></div>
+      <div class="main-content-shadow">
+        <div class="git-tree-container">
+          <div class="git-tree" id="gitTree"></div>
+        </div>
+      </div>
     </main>
+
     <script src="scripts.js"></script>
+
   </body>
 </html>
