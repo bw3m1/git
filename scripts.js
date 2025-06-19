@@ -107,6 +107,17 @@ function renderGitTree() {
   `;
   fragment.appendChild(header);
 
+  // Add a legend for branch colors (top of tree)
+  const legendElem = document.createElement('div');
+  legendElem.className = 'git-graph-legend';
+  legendElem.innerHTML = Object.entries(getBranchMap(commits)).map(([branch, info]) =>
+    `<span class="git-graph-legend-item">
+      <span class="git-graph-legend-dot" style="border-color:${info.color};background:${info.color};"></span>
+      ${branch}
+    </span>`
+  ).join('');
+  fragment.appendChild(legendElem);
+
   // Sort commits by date (newest first)
   const displayCommits = [...commits].sort((a, b) => 
     new Date(b.date) - new Date(a.date)
@@ -116,7 +127,7 @@ function renderGitTree() {
   const branchMap = getBranchMap(displayCommits);
   const numCols = Math.max(3, Object.keys(branchMap).length); // Minimum 3 columns for better spacing
   const cellWidth = 30;
-  const cellHeight = 44; // Slightly taller for better curves
+  const rowHeight = 54; // Match CSS min-height for .commit-node
 
   // Map from hash to row index for graph lines
   const hashToRow = {};
@@ -130,10 +141,7 @@ function renderGitTree() {
     commitLanes.set(commit, branchMap[getBranch(commit)]?.col || 0);
   });
 
-  // Track active branches for continuous lines
-  const activeBranches = new Set();
-
-  // For each commit, render a row (from newest to oldest)
+  // --- Render commit rows (without per-row SVG) ---
   displayCommits.forEach((commit, idx) => {
     const node = document.createElement('div');
     node.className = `commit-node${commit.isHead ? ' head-commit' : ''}`;
@@ -150,129 +158,6 @@ function renderGitTree() {
         </span>`;
     }
 
-    // SVG graph cell - enhanced for GitKraken look
-    const graphCell = document.createElement('div');
-    graphCell.className = 'commit-graph-cell';
-    
-    const branch = commitBranches.get(commit);
-    const branchInfo = branchMap[branch] || { col: 0, color: branchColors[0] };
-    const colIdx = branchInfo.col;
-    const color = branchInfo.color;
-    const svgWidth = cellWidth * numCols;
-
-    // Create SVG with improved dimensions
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", svgWidth);
-    svg.setAttribute("height", cellHeight);
-    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${cellHeight}`);
-    svg.style.overflow = "visible";
-
-    // Draw vertical branch lines with gradient effect
-    Object.entries(branchMap).forEach(([b, info]) => {
-      const x = cellWidth / 2 + info.col * cellWidth;
-      const isActive = activeBranches.has(b);
-      const opacity = isActive ? 0.25 : 0.15;
-      
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", x);
-      line.setAttribute("y1", 0);
-      line.setAttribute("x2", x);
-      line.setAttribute("y2", cellHeight);
-      line.setAttribute("stroke", info.color);
-      line.setAttribute("stroke-width", isActive ? "3.5" : "2.5");
-      line.setAttribute("opacity", opacity);
-      if (!isActive) {
-        line.setAttribute("stroke-dasharray", "3,3");
-      }
-      svg.appendChild(line);
-    });
-
-    // Update active branches
-    commit.parents.forEach(parentHash => {
-      const parentRow = hashToRow[parentHash];
-      if (parentRow !== undefined) {
-        const parentCommit = displayCommits[parentRow];
-        const parentBranch = commitBranches.get(parentCommit);
-        if (parentBranch) activeBranches.add(parentBranch);
-      }
-    });
-
-    // Draw connections to parents with smoother curves
-    commit.parents.forEach((parentHash, parentIndex) => {
-      const parentRow = hashToRow[parentHash];
-      if (parentRow !== undefined) {
-        const parentCommit = displayCommits[parentRow];
-        const parentBranch = commitBranches.get(parentCommit);
-        const parentInfo = branchMap[parentBranch] || { col: 0, color: branchColors[0] };
-        
-        const x1 = cellWidth / 2 + colIdx * cellWidth;
-        const y1 = cellHeight / 2;
-        const x2 = cellWidth / 2 + parentInfo.col * cellWidth;
-        const y2 = cellHeight / 2 + (parentRow - idx) * cellHeight;
-        const isMerge = commit.parents.length > 1 && parentIndex > 0;
-
-        // Enhanced Bezier curves with dynamic control points
-        const curveFactor = Math.min(80, Math.max(20, Math.abs(colIdx - parentInfo.col) * 25));
-        const d = isMerge 
-          ? `M${x1},${y1} C${x1},${y1 + curveFactor*0.7} ${x2},${y2 - curveFactor*0.5} ${x2},${y2}`
-          : `M${x1},${y1} C${x1},${y1 + curveFactor} ${x2},${y2 - curveFactor} ${x2},${y2}`;
-        
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", d);
-        path.setAttribute("stroke", parentInfo.color);
-        path.setAttribute("stroke-width", isMerge ? "2.5" : "3");
-        path.setAttribute("fill", "none");
-        path.setAttribute("opacity", isMerge ? "0.7" : "0.9");
-        path.setAttribute("class", "commit-path");
-        svg.appendChild(path);
-      }
-    });
-
-    // Draw the commit dot with enhanced styling
-    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    const dotX = cellWidth / 2 + colIdx * cellWidth;
-    dot.setAttribute("cx", dotX);
-    dot.setAttribute("cy", cellHeight / 2);
-    dot.setAttribute("r", "9");
-    dot.setAttribute("fill", commit.isHead ? '#ff7b26' : color);
-    dot.setAttribute("stroke", "#ffffff");
-    dot.setAttribute("stroke-width", commit.isHead ? "3" : "2");
-    dot.setAttribute("class", "commit-dot");
-    dot.setAttribute("filter", "url(#commit-glow)");
-    svg.appendChild(dot);
-
-    // Add glow filter for commit dots
-    const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-    filter.setAttribute("id", "commit-glow");
-    filter.setAttribute("x", "-30%");
-    filter.setAttribute("y", "-30%");
-    filter.setAttribute("width", "160%");
-    filter.setAttribute("height", "160%");
-    const feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-    feGaussianBlur.setAttribute("stdDeviation", "2");
-    feGaussianBlur.setAttribute("result", "blur");
-    const feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
-    feComposite.setAttribute("in", "SourceGraphic");
-    feComposite.setAttribute("in2", "blur");
-    feComposite.setAttribute("operator", "over");
-    filter.appendChild(feGaussianBlur);
-    filter.appendChild(feComposite);
-    svg.appendChild(filter);
-
-    // Draw HEAD indicator with animation
-    if (commit.isHead) {
-      const headIndicator = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      headIndicator.setAttribute("cx", dotX);
-      headIndicator.setAttribute("cy", cellHeight / 2);
-      headIndicator.setAttribute("r", "5");
-      headIndicator.setAttribute("fill", "#ffffff");
-      headIndicator.setAttribute("class", "head-dot");
-      svg.appendChild(headIndicator);
-    }
-
-    graphCell.appendChild(svg);
-
-    // Compose row with improved structure
     node.innerHTML = `
       <div class="commit-branch-tag">${branchTagHtml}</div>
       <div class="commit-graph"></div>
@@ -283,17 +168,159 @@ function renderGitTree() {
       <div class="commit-date">${formatDateTime(commit.date)}</div>
       <div class="commit-sha">${commit.hash.substring(0, 7)}</div>
     `;
-
-    // Insert graph
-    node.querySelector('.commit-graph').replaceWith(graphCell);
     node.addEventListener('click', () => showCommitDetails(commit));
+    node.addEventListener('touchstart', () => showCommitDetails(commit), {passive:true});
     fragment.appendChild(node);
-
-    // Update active branches after rendering
-    if (branch) activeBranches.add(branch);
   });
 
+  // --- Calculate SVG overlay alignment ---
+  // Remove any previous SVG overlays
+  const prevSvg = gitTree.querySelector('.commit-graph-svg');
+  if (prevSvg) prevSvg.remove();
+
+  // Temporarily add fragment to measure positions
+  gitTree.style.position = "relative";
   gitTree.appendChild(fragment);
+
+  // --- Fix: Use getBoundingClientRect for precise SVG alignment ---
+  // Find the "Graph" column offset and width RELATIVE TO .git-tree
+  let graphLeft = 0, graphWidth = 110;
+  const headerRow = gitTree.querySelector('.git-tree-header');
+  if (headerRow) {
+    const headerCells = headerRow.children;
+    if (headerCells.length >= 2) {
+      const graphCell = headerCells[1];
+      // Use getBoundingClientRect relative to .git-tree
+      const treeRect = gitTree.getBoundingClientRect();
+      const cellRect = graphCell.getBoundingClientRect();
+      graphLeft = cellRect.left - treeRect.left;
+      graphWidth = cellRect.width;
+    }
+  }
+
+  // Calculate SVG top offset: header + legend heights
+  let svgTop = 0;
+  if (headerRow) svgTop += headerRow.offsetHeight;
+  const legendNode = gitTree.querySelector('.git-graph-legend');
+  if (legendNode) svgTop += legendNode.offsetHeight;
+
+  // SVG covers the commit rows area
+  const svgHeight = displayCommits.length * rowHeight;
+  const graphSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  graphSvg.setAttribute("width", graphWidth);
+  graphSvg.setAttribute("height", svgHeight);
+  graphSvg.setAttribute("class", "commit-graph-svg");
+  graphSvg.style.position = "absolute";
+  graphSvg.style.left = `${graphLeft}px`;
+  graphSvg.style.top = `${svgTop}px`;
+  graphSvg.style.pointerEvents = "none";
+  graphSvg.style.zIndex = "1000";
+
+  // Draw vertical branch lines for all rows
+  Object.entries(branchMap).forEach(([b, info]) => {
+    const x = graphWidth / (numCols + 1) * (info.col + 1);
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x);
+    line.setAttribute("y1", 0);
+    line.setAttribute("x2", x);
+    line.setAttribute("y2", svgHeight);
+    line.setAttribute("stroke", info.color);
+    line.setAttribute("stroke-width", "2.5");
+    line.setAttribute("opacity", "0.13");
+    line.setAttribute("stroke-dasharray", "3,3");
+    graphSvg.appendChild(line);
+  });
+
+  // Draw edges (parent connections)
+  displayCommits.forEach((commit, idx) => {
+    const colIdx = commitLanes.get(commit);
+    const x1 = graphWidth / (numCols + 1) * (colIdx + 1);
+    const y1 = idx * rowHeight + rowHeight / 2;
+    commit.parents.forEach((parentHash, parentIndex) => {
+      const parentRow = hashToRow[parentHash];
+      if (parentRow !== undefined) {
+        const parentCommit = displayCommits[parentRow];
+        const parentCol = commitLanes.get(parentCommit);
+        const x2 = graphWidth / (numCols + 1) * (parentCol + 1);
+        const y2 = parentRow * rowHeight + rowHeight / 2;
+        const isMerge = commit.parents.length > 1 && parentIndex > 0;
+        const curveFactor = Math.min(80, Math.max(20, Math.abs(colIdx - parentCol) * 25));
+        const d = isMerge 
+          ? `M${x1},${y1} C${x1},${y1 + curveFactor*0.7} ${x2},${y2 - curveFactor*0.5} ${x2},${y2}`
+          : `M${x1},${y1} C${x1},${y1 + curveFactor} ${x2},${y2 - curveFactor} ${x2},${y2}`;
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", d);
+        path.setAttribute("stroke", branchMap[commit.branch]?.color || branchColors[0]);
+        path.setAttribute("stroke-width", isMerge ? "2.5" : "3");
+        path.setAttribute("fill", "none");
+        path.setAttribute("opacity", isMerge ? "0.7" : "0.9");
+        path.setAttribute("class", "commit-path");
+        graphSvg.appendChild(path);
+      }
+    });
+  });
+
+  // Draw commit dots
+  displayCommits.forEach((commit, idx) => {
+    const colIdx = commitLanes.get(commit);
+    const x = graphWidth / (numCols + 1) * (colIdx + 1);
+    const y = idx * rowHeight + rowHeight / 2;
+    const color = branchMap[commit.branch]?.color || branchColors[0];
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", x);
+    dot.setAttribute("cy", y);
+    dot.setAttribute("r", "13");
+    dot.setAttribute("fill", commit.isHead ? '#ff7b26' : color);
+    dot.setAttribute("stroke", "#ffffff");
+    dot.setAttribute("stroke-width", commit.isHead ? "4.5" : "3.5");
+    dot.setAttribute("class", "commit-dot" + (commit.isHead ? " head-dot" : ""));
+    dot.setAttribute("tabindex", "0");
+    dot.setAttribute("role", "button");
+    dot.setAttribute("aria-label", `Commit ${commit.hash}: ${commit.message}`);
+    dot.setAttribute("data-tooltip", `${commit.message} (${commit.hash.substring(0,7)})`);
+    dot.addEventListener('click', e => {
+      e.stopPropagation();
+      showCommitDetails(commit);
+    });
+    dot.addEventListener('keydown', e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        showCommitDetails(commit);
+      }
+    });
+    graphSvg.appendChild(dot);
+
+    // Draw HEAD indicator
+    if (commit.isHead) {
+      const headIndicator = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      headIndicator.setAttribute("cx", x);
+      headIndicator.setAttribute("cy", y);
+      headIndicator.setAttribute("r", "7");
+      headIndicator.setAttribute("fill", "#fff");
+      headIndicator.setAttribute("class", "head-dot");
+      graphSvg.appendChild(headIndicator);
+    }
+  });
+
+  // Insert SVG overlay as the first child after header and legend
+  const afterLegend = gitTree.querySelector('.git-graph-legend');
+  if (afterLegend && afterLegend.nextSibling) {
+    gitTree.insertBefore(graphSvg, afterLegend.nextSibling);
+  } else {
+    gitTree.insertBefore(graphSvg, gitTree.firstChild);
+  }
+
+  // --- UI fix: scroll graph column into view if needed ---
+  // This helps on small screens so the graph is always visible
+  const container = document.querySelector('.git-tree-container');
+  const graphCell = gitTree.querySelector('.commit-node > .commit-graph, .git-tree-header > span:nth-child(2)');
+  if (container && graphCell) {
+    const cellRect = graphCell.getBoundingClientRect();
+    const contRect = container.getBoundingClientRect();
+    if (cellRect.left < contRect.left || cellRect.right > contRect.right) {
+      container.scrollLeft = graphCell.offsetLeft - 40;
+    }
+  }
 }
 
 // Helper to get contrasting text color

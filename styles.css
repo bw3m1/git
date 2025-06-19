@@ -156,6 +156,7 @@ html, body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  overflow-x: auto; /* Allow horizontal scroll if needed */
 }
 
 .git-tree {
@@ -165,6 +166,17 @@ html, body {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  min-width: 700px; /* Prevent columns from collapsing */
+}
+
+/* SVG overlay for commit graph */
+.commit-graph-svg {
+  position: absolute;
+  /* Remove hardcoded top/left/width, let JS set them */
+  background: none;
+  pointer-events: none;
+  z-index: 5;
 }
 
 /* Git Tree Header */
@@ -274,15 +286,21 @@ html, body {
   overflow: visible;
   background: repeating-linear-gradient(
     to bottom,
-    rgba(60, 60, 70, 0.07),
-    rgba(60, 60, 70, 0.07) 1px,
+    rgba(60, 60, 70, 0.10),
+    rgba(60, 60, 70, 0.10) 1px,
     transparent 1px,
     transparent 54px
   );
   /* Subtle grid lines for orientation */
   z-index: 1000;
-  transition: background 0.2s;
-  border-left: 3px solid var(--border-color);
+  transition: background 0.2s, box-shadow 0.2s;
+  border-left: 4px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.commit-graph-cell:hover {
+  background: rgba(60, 60, 70, 0.18);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
 }
 
 .commit-graph-cell svg {
@@ -300,8 +318,8 @@ html, body {
   stroke-linecap: round;
   stroke-width: 4px;
   opacity: 0.7;
-  transition: opacity 0.2s, stroke-width 0.2s, stroke 0.2s;
-  filter: drop-shadow(0 0 2px rgba(0,0,0,0.15));
+  transition: opacity 0.2s, stroke-width 0.2s, stroke 0.2s, filter 0.2s;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.18));
 }
 
 .commit-path.branch-main {
@@ -318,48 +336,57 @@ html, body {
 
 .commit-path:hover {
   opacity: 1 !important;
-  stroke-width: 6px !important;
+  stroke-width: 7px !important;
   stroke: #fff !important;
+  filter: drop-shadow(0 0 12px #fff);
 }
 
 /* Commit Dot Styling */
 .commit-dot {
-  r: 11px !important;
-  stroke-width: 3.5px;
+  r: 13px !important;
+  stroke-width: 4.5px;
   stroke-opacity: 1;
-  fill: #222;
+  fill: #23272e;
   stroke: #569cd6;
-  transition: all 0.2s;
-  filter: drop-shadow(0 0 6px rgba(86,156,214,0.25));
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 0 10px rgba(86,156,214,0.32));
   cursor: pointer;
   z-index: 3;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
 }
 
 .commit-dot.merge {
   stroke: var(--merge-color);
-  filter: drop-shadow(0 0 8px rgba(198,120,221,0.18));
+  filter: drop-shadow(0 0 12px rgba(198,120,221,0.22));
 }
 
 .commit-dot.added {
   stroke: var(--add-color);
-  filter: drop-shadow(0 0 8px rgba(152,195,121,0.18));
+  filter: drop-shadow(0 0 12px rgba(152,195,121,0.22));
 }
 
 .commit-dot.deleted {
   stroke: var(--delete-color);
-  filter: drop-shadow(0 0 8px rgba(224,108,117,0.18));
+  filter: drop-shadow(0 0 12px rgba(224,108,117,0.22));
 }
 
 .commit-dot.head-dot {
   stroke: var(--head-color);
-  filter: drop-shadow(0 0 12px rgba(255,123,38,0.25));
+  filter: drop-shadow(0 0 18px rgba(255,123,38,0.32));
   animation: pulse 1.5s infinite;
 }
 
+.commit-dot:active,
+.commit-dot:focus,
 .commit-dot:hover {
-  r: 14px !important;
-  stroke-width: 5px;
-  filter: drop-shadow(0 0 16px rgba(86,156,214,0.35));
+  r: 17px !important;
+  stroke-width: 6px;
+  filter: drop-shadow(0 0 22px #fff);
+  outline: none;
+}
+
+.commit-dot:focus {
+  outline: 2px solid #fff;
 }
 
 /* Tooltip for commit dots */
@@ -387,7 +414,7 @@ html, body {
   display: flex;
   gap: 18px;
   align-items: center;
-  margin: 18px 0 0 12px;
+  margin: 18px 0 8px 12px; /* Add bottom margin for spacing */
   font-size: 0.93rem;
   color: var(--text-muted);
   -webkit-user-select: none;
@@ -658,3 +685,14 @@ svg {
   z-index: 5;
 }
 
+/* Touch-friendly: increase tap targets */
+@media (pointer: coarse) {
+  .commit-dot {
+    r: 18px !important;
+    stroke-width: 7px;
+  }
+  .commit-node {
+    min-height: 64px;
+    padding: 18px 20px;
+  }
+}
