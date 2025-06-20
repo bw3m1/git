@@ -268,11 +268,9 @@ function renderGitTree() {
     }
   }
 
-  // Calculate SVG top offset: header + legend heights + half row height
+  // Calculate SVG top offset: header height + half row height
   let svgTop = 0;
   if (headerRow) svgTop += headerRow.offsetHeight;
-  const legendNode = gitTree.querySelector('.git-graph-legend');
-  if (legendNode) svgTop += legendNode.offsetHeight;
   svgTop += rowHeight / 2; // Shift SVG down by half a row height
 
   // SVG covers the commit rows area
@@ -283,7 +281,7 @@ function renderGitTree() {
   graphSvg.setAttribute("class", "commit-graph-svg");
   graphSvg.style.position = "absolute";
   graphSvg.style.left = `${graphLeft}px`;
-  graphSvg.style.top = `${svgTop}px`; // svgTop is now just header+legend height
+  graphSvg.style.top = `${svgTop}px`;
   graphSvg.style.pointerEvents = "none";
   graphSvg.style.zIndex = "1000";
 
@@ -302,7 +300,7 @@ function renderGitTree() {
     graphSvg.appendChild(line);
   });
 
-  // Draw edges (parent connections) - FIXED COLOR LOGIC
+  // Draw edges (parent connections)
   displayCommits.forEach((commit, idx) => {
     const colIdx = commitLanes.get(commit);
     const x1 = graphWidth / (numCols + 1) * (colIdx + 1);
@@ -315,22 +313,17 @@ function renderGitTree() {
         const x2 = graphWidth / (numCols + 1) * (parentCol + 1);
         const y2 = parentRow * rowHeight;
         
-        // FIXED: Correct coloring logic
         let color;
         if (commit.parents.length > 1) { // Merge commit
           if (parentIndex === 0) {
-            // First parent - use current branch color
             color = branchMap[commit.branch]?.color || branchColors[0];
           } else {
-            // Additional parents - use merged branch's color
             color = branchMap[parentCommit.branch]?.color || branchColors[0];
           }
         } else { // Regular commit
-          // Use current branch color
           color = branchMap[commit.branch]?.color || branchColors[0];
         }
 
-        // L-turn with rounded corner, direction depends on merge or branch
         const isMerge = y2 < y1;
         const isBranch = y2 > y1;
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -338,7 +331,6 @@ function renderGitTree() {
         let d;
         if (Math.abs(x2 - x1) > 1 && Math.abs(y2 - y1) > 1) {
           if (isMerge) {
-            // Merge: go up then over (vertical, arc, horizontal)
             const signX = x2 > x1 ? 1 : -1;
             const signY = -1;
             d =
@@ -348,7 +340,6 @@ function renderGitTree() {
               `${x1 + signX * radius},${y2} ` +
               `L${x2},${y2}`;
           } else if (isBranch) {
-            // Branch: go over then up (horizontal, arc, vertical)
             const signX = x2 > x1 ? 1 : -1;
             const signY = 1;
             d =
@@ -358,16 +349,14 @@ function renderGitTree() {
               `${x2},${y1 + signY * radius} ` +
               `L${x2},${y2}`;
           } else {
-            // fallback straight line
             d = `M${x1},${y1} L${x2},${y2}`;
           }
         } else {
-          // Just a straight line (no L)
           d = `M${x1},${y1} L${x2},${y2}`;
         }
         
         path.setAttribute("d", d);
-        path.setAttribute("stroke", color);  // Use calculated color
+        path.setAttribute("stroke", color);
         path.setAttribute("stroke-width", (commit.parents.length > 1 && parentIndex > 0) ? "2.5" : "3");
         path.setAttribute("fill", "none");
         path.setAttribute("opacity", (commit.parents.length > 1 && parentIndex > 0) ? "0.7" : "0.9");
@@ -419,13 +408,8 @@ function renderGitTree() {
     }
   });
 
-  // Insert SVG overlay as the first child after header and legend
-  const afterLegend = gitTree.querySelector('.git-graph-legend');
-  if (afterLegend && afterLegend.nextSibling) {
-    gitTree.insertBefore(graphSvg, afterLegend.nextSibling);
-  } else {
-    gitTree.insertBefore(graphSvg, gitTree.firstChild);
-  }
+  // Insert SVG overlay as the first child after header
+  gitTree.insertBefore(graphSvg, headerRow.nextSibling);
 
   // Scroll graph column into view if needed
   const container = document.querySelector('.git-tree-container');
