@@ -141,16 +141,16 @@ const commits = [
   }
 ];
 
-// GitKraken-like branch colors (more vibrant)
+// GitKraken-like branch colors
 const branchColors = [
-  "#2ec4b6", // teal
-  "#3a86ff", // blue
-  "#8338ec", // purple
-  "#ff006e", // pink
-  "#ffbe0b", // yellow
-  "#fb5607", // orange
-  "#ff595e", // red
-  "#43aa8b"  // green
+  "#1b647c", // teal
+  "#11448d", // blue
+  "#550f72", // purple
+  "#711b6c", // pink-ish
+  "#7b104a", // red-ish
+  "#751012", // dark red
+  "#873e28", // orange-ish
+  "#87742b"  // yellow-ish
 ];
 
 // Dynamically assign columns and colors to branches
